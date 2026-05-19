@@ -7,12 +7,15 @@
 # email magic link instead of needing GitHub credentials.
 
 backend:
-  name: git-gateway
+  name: github
   repo: owner/your-repo-name      # CHANGE: format is github-username/repo-name
   branch: main
-  # DecapBridge replaces the default git-gateway auth with PKCE OAuth.
-  # Replace this UUID with your own from https://decapbridge.com (free, takes 5 min).
-  site_uuid: REPLACE_WITH_DECAP_BRIDGE_SITE_UUID
+  # Sveltia + DecapBridge OAuth — proxies through DecapBridge so the editor logs in
+  # with an email magic link instead of needing a GitHub account. After signing up
+  # at https://decapbridge.com (free, takes 5 min), replace the UUID below.
+  # NOTE: the deprecated `name: git-gateway` backend is NOT supported by Sveltia.
+  base_url: https://decapbridge.com
+  auth_endpoint: sites/REPLACE_WITH_DECAP_BRIDGE_SITE_UUID/auth
 
 # Where uploaded images live in the repo. The path is relative to the public/
 # directory so /uploads/photo.jpg resolves correctly in the rendered site.

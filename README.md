@@ -63,11 +63,13 @@ MIT. Use freely, fork freely, no attribution required (but appreciated).
 
 ## Status
 
-🚧 In active build. Tracked phases:
+✅ v0.1 complete. All 6 phases shipped:
 
-- [ ] Phase 1 — Scaffolding + SPEC.md + README outline
-- [ ] Phase 2 — Next.js reference site skeleton (Tailwind + DecapBridge auth)
-- [ ] Phase 3 — Sveltia CMS wired with example collections
-- [ ] Phase 4 — Puck editor + reference block library
-- [ ] Phase 5 — Save pipeline (serverless → GitHub → auto-deploy)
-- [ ] Phase 6 — SETUP.md + porting-to-aviara.md
+- [x] Phase 1 — Scaffolding + SPEC.md + README outline
+- [x] Phase 2 — Next.js 15 reference site skeleton (Tailwind 4 + TypeScript)
+- [x] Phase 3 — Sveltia CMS wired with 3 example collections (settings, services, team)
+- [x] Phase 4 — Puck 0.21.2 editor + 8-block reference library
+- [x] Phase 5 — Save pipeline (POST /api/save-page → GitHub Contents API → auto-deploy)
+- [x] Phase 6 — SETUP.md + porting-to-aviara.md + templates/
+
+**Next:** ground-truth the Aviara port. Open issues for anything that doesn't match the docs.

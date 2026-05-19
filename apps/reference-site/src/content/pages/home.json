@@ -1,0 +1,51 @@
+{
+  "content": [
+    {
+      "type": "Hero",
+      "props": {
+        "id": "Hero-home-1",
+        "heading": "Welcome to Example Co.",
+        "subheading": "This page is rendered through the Puck visual editor. Open /admin/pages/home to edit it.",
+        "ctaLabel": "Edit this page",
+        "ctaHref": "/admin/pages/home",
+        "variant": "centered",
+        "imageUrl": ""
+      }
+    },
+    {
+      "type": "FeatureGrid",
+      "props": {
+        "id": "FeatureGrid-home-1",
+        "heading": "Reference Blocks",
+        "columns": 3,
+        "features": [
+          { "icon": "🎨", "title": "Visual Editing", "description": "Drag, drop, and edit blocks with a no-code editor." },
+          { "icon": "📂", "title": "Git-Backed", "description": "Every change is a commit. Your content stays portable." },
+          { "icon": "💸", "title": "Free Forever", "description": "All OSS. No SaaS bills, no lock-in." }
+        ]
+      }
+    },
+    {
+      "type": "Testimonial",
+      "props": {
+        "id": "Testimonial-home-1",
+        "quote": "We replaced our $49/mo SaaS editor with this kit and Kristy was up and running in 20 minutes.",
+        "attribution": "DJ",
+        "attributionDetail": "Site owner",
+        "variant": "banner"
+      }
+    },
+    {
+      "type": "CTABand",
+      "props": {
+        "id": "CTABand-home-1",
+        "heading": "See it for yourself",
+        "body": "Open the Puck editor to drag blocks around and edit copy. Changes commit to Git and auto-deploy.",
+        "ctaLabel": "Open editor",
+        "ctaHref": "/admin/pages/home",
+        "background": "gold"
+      }
+    }
+  ],
+  "root": { "props": {} }
+}

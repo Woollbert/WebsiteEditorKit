@@ -1,176 +1,187 @@
 # Porting the Kit to AviaraDesignCo
 
 **Target:** https://github.com/Woollbert/AviaraDesignCo (subdir `aviara-site/`)
-**Stack:** Next.js + Tailwind + TypeScript + Playwright (confirmed 2026-05-19)
-**Status:** Reference install guide. Actual install steps will be refined once executed against Aviara's tree.
+**Stack:** Next.js 15.5 + React 19 + Tailwind 3 + TypeScript + Playwright
+**Status:** ✅ Dry-run port completed 2026-05-19. Branch `kit-port-dry-run`. All 6 smoke tests pass against built+started Aviara.
+**Live install:** Pending DJ-provided credentials (DECAP_BRIDGE_SITE_UUID, GITHUB_PAT, EDITOR_SHARED_TOKEN).
 
 ---
 
-## Why this exists separately from SETUP.md
+## What this doc is now
 
-[`SETUP.md`](../SETUP.md) is the generic install guide. This doc captures the **Aviara-specific** choices: which Sveltia collections match Aviara's content, which extra Puck blocks Aviara likely needs, and the deploy-specific details (Aviara is on Vercel; the editor's email is X).
+This was originally a speculative install guide. After actually executing the port on Aviara, it's been rewritten to reflect **what really happened**, including:
+- The one real compatibility gotcha (Tailwind version mismatch)
+- The theme-bridge pattern that made the kit's blocks work in Aviara colors with zero block modifications
+- What broke during the port (nothing, it turns out)
+- What still needs real credentials to fully verify
 
-When this doc gets ground-truthed against the real install on Aviara, it should be updated with what actually happened — including any gotchas.
-
----
-
-## Pre-flight checks
-
-Before starting:
-
-1. **Confirm Aviara's owner has access to their site's Vercel project** (they'll need to add env vars). If DJ owns the Vercel project, confirm DJ will be the one editing initially.
-2. **Decide if Aviara is using DecapBridge or some other auth.** The kit assumes DecapBridge. If Aviara already has another auth flow set up, adapt rather than replace.
-3. **Confirm photo upload volume.** Aviara is a staging company → photos are the product. If the owner expects to upload 50+ photos per project, the kit's "paste URL into block" UX is too painful. Consider either:
-   - Switching to Cloudinary or Imgix integration in the ImageGallery block
-   - Or making the Sveltia media library the primary upload point
+To reproduce: see the [kit-port-dry-run branch](https://github.com/Woollbert/AviaraDesignCo/tree/kit-port-dry-run) on Aviara.
 
 ---
 
-## Aviara-specific install steps
+## Pre-flight findings (Aviara repo audit, 2026-05-19)
 
-Most of this follows [SETUP.md Path B (existing project)](../SETUP.md#path-b--add-to-an-existing-nextjs-project). The deltas below are Aviara-only.
+| Aspect | Aviara | Kit | Compatibility |
+|---|---|---|---|
+| Framework | Next.js 15.5.0 | Next.js 15.1.4 | ✅ Compatible |
+| React | 19.0.0 | 19.0.0 | ✅ Match |
+| **Tailwind** | **3.4.17 (config.ts-based)** | **4.0.0 (CSS-based @theme)** | ⚠️ Different syntax, but kit's blocks use plain CSS variables — works in either |
+| Project layout | Root + `aviara-site/` subdir | Single project | Port targets `aviara-site/` paths |
+| Existing pages | Hand-coded `page.tsx` only | Puck-managed via JSON | Coexist — Aviara's `/` and kit's `/[slug]` don't collide |
+| CMS today | None | Sveltia mounted | Clean slate |
+| Playwright | Already installed | Same | No conflict |
+| Brand palette | `--color-bone`, `--color-ink`, `--color-brass` (CSS vars on `:root`) | Generic kit names (`--color-cream`, `--color-gold`) | **Solved with CSS variable aliases** — see Theme Bridge below |
 
-### Step 1 — Install into `aviara-site/`, not the repo root
+**Bottom line:** structurally compatible. The Tailwind major-version difference is a non-issue because the kit's reference blocks use inline `style={{ background: 'var(--color-cream)' }}` rather than Tailwind utility classes for color tokens.
 
-The Aviara repo has the Next.js project at `aviara-site/`, not the repo root. All copy operations from the kit's `apps/reference-site/` should target `aviara-site/` paths.
+---
 
-```powershell
-cd /path/to/AviaraDesignCo/aviara-site
-npm install @puckeditor/core @octokit/rest
-```
+## The one real install gotcha
 
-### Step 2 — Bridge Tailwind themes
+**Theme tokens have different names.** The kit's blocks reference `--color-cream`, `--color-ink`, `--color-gold`, `--color-cream-soft`, `--color-ink-soft`, `--color-gold-deep`. Aviara's globals.css defines `--color-bone`, `--color-ink`, `--color-brass`, etc.
 
-Aviara's `tailwind.config.ts` uses a luxury neutral palette. The kit's blocks use CSS variables (`--color-ink`, `--color-cream`, `--color-gold`).
+**Without a fix:** kit blocks render with undefined CSS variables → fall back to browser defaults → look broken.
 
-**Option A (recommended):** Add the kit's CSS variables to Aviara's existing `globals.css`, but **assign them to Aviara's brand values**:
+**The fix (one block in `aviara-site/src/app/globals.css`):**
 
 ```css
-@theme {
-  --color-ink: /* Aviara's primary dark */;
-  --color-cream: /* Aviara's primary light */;
-  --color-gold: /* Aviara's accent — if no accent, use a neutral mid-tone */;
-  /* etc */
+:root {
+  /* Existing Aviara variables (kept as-is) */
+  --color-bone: #f4efe8;
+  --color-ink: #1c1815;
+  --color-brass: #9a7b3d;
+  /* ... */
+
+  /* WebsiteEditorKit compatibility aliases */
+  --color-cream: var(--color-bone);
+  --color-cream-soft: var(--color-ivory);
+  --color-ink-soft: var(--color-slate);
+  --color-gold: var(--color-brass);
+  --color-gold-deep: var(--color-brass-deep);
 }
 ```
 
-This means the kit's blocks "just work" in Aviara's palette without rewriting each block.
+This makes the kit's 8 reference blocks pick up Aviara's brand colors **without modifying a single block source file**. Verified at runtime: the CTABand block with `background: 'gold'` computes to `rgb(154, 123, 61)` — Aviara's brass, not the kit's default amber.
 
-**Option B:** Rewrite each block's JSX to use Aviara's Tailwind classes directly (`bg-stone-50`, `text-zinc-900`, etc.). More work but cleaner long-term.
+**Why this pattern matters for the future:** when you port the kit to any other site (a third one), the same trick works. Drop the kit, add the aliases, done. No block-by-block migration.
 
-### Step 3 — Sveltia collections for Aviara
+---
 
-Replace the kit's `services` / `team` collections in `public/admin/config.yml` with Aviara's actual content shape:
+## What was copied (verbatim from kit)
 
-```yaml
-collections:
-  - name: settings
-    label: Site Settings
-    files:
-      - name: site
-        label: Site Info
-        file: src/content/site.json
-        fields:
-          - { name: name, label: Business Name, widget: string }
-          - { name: tagline, label: Tagline, widget: string }
-          - { name: phone, label: Phone, widget: string }
-          - { name: email, label: Email, widget: string }
-          - { name: serviceArea, label: Service Area, widget: string }
+These files moved from `WebsiteEditorKit/apps/reference-site/` → `AviaraDesignCo/aviara-site/`, no edits:
 
-  - name: projects
-    label: Projects (Portfolio)
-    folder: src/content/projects
-    create: true
-    slug: '{{slug}}'
-    fields:
-      - { name: title, label: Project Title, widget: string }
-      - { name: location, label: Location, widget: string }
-      - { name: completedDate, label: Completed, widget: datetime }
-      - { name: description, label: Description, widget: text }
-      - name: photos
-        label: Photos
-        widget: list
-        fields:
-          - { name: url, label: Image URL, widget: image }
-          - { name: caption, label: Caption, widget: string }
-          - { name: room, label: Room (kitchen, bedroom, etc.), widget: string }
+- `src/puck/` (entire dir — config.ts + all 8 block files)
+- `src/components/PuckEditor.client.tsx`
+- `src/components/PuckRender.tsx`
+- `src/lib/pages.ts`
+- `src/app/api/save-page/route.ts`
+- `public/admin/index.html`
+- `.env.example`
 
-  - name: testimonials
-    label: Testimonials
-    folder: src/content/testimonials
-    create: true
-    fields:
-      - { name: quote, label: Quote, widget: text }
-      - { name: attribution, label: Attributed To, widget: string }
-      - { name: role, label: Role (Realtor, Homeowner, etc.), widget: string }
-      - { name: featured, label: Show on homepage, widget: boolean }
+These were copied + edited for Aviara:
 
-  - name: services
-    label: Services
-    folder: src/content/services
-    create: true
-    fields:
-      - { name: name, label: Service Name, widget: string }
-      - { name: shortDescription, label: Short Description, widget: text }
-      - { name: longDescription, label: Long Description, widget: markdown }
-      - { name: hero, label: Hero Image, widget: image }
-```
+- `src/app/admin/pages/[slug]/page.tsx` — identical to kit's version
+- `src/app/[slug]/page.tsx` — identical to kit's version, plus a comment noting that Aviara's hand-coded pages take precedence over same-slug Puck pages
+- `public/admin/config.yml` — **replaced kit's services/team collections with Aviara-specific projects (with photo sets + room enum), testimonials, services**
+- `src/app/globals.css` — added the 5 CSS variable aliases described above
+- `src/content/pages/home-editable.json` — a sample editable page proving the renderer works
 
-### Step 4 — Aviara-specific Puck blocks
+---
 
-The 8 generic blocks in the kit get you most of the way. For staging/interiors, you'll likely want to add:
+## Install command sequence (reproducible)
 
-| Block | Why Aviara needs it |
-|---|---|
-| `BeforeAfterSlider` | Show staged-vs-empty rooms — the marquee value prop |
-| `ProjectShowcase` | Pull a single project from the `projects` collection, render full photo gallery with metadata |
-| `ServiceDetail` | Pull a single service, render hero + description + CTA |
-| `TestimonialCarousel` | Pull featured testimonials and rotate through them |
-| `RoomGrid` | Photo grid filtered by room type (kitchen, bedroom, living) |
-
-Each one follows the same pattern as the kit's existing blocks — `ComponentConfig<Props>` with `fields`, `defaultProps`, `render`. Use `ImageGalleryBlock.tsx` as a copy-paste starting point for any photo-heavy block.
-
-### Step 5 — Vercel env vars
-
-Aviara is on Vercel. Add the env vars from [SETUP.md Step 4](../SETUP.md#step-4--wire-up-environment-variables) via:
+From a fresh clone of `AviaraDesignCo`:
 
 ```powershell
-vercel env add EDITOR_SHARED_TOKEN production
-vercel env add GITHUB_PAT production
-vercel env add GITHUB_REPO production  # value: Woollbert/AviaraDesignCo
-vercel env add GITHUB_BRANCH production  # value: main
-vercel env add DECAP_BRIDGE_SITE_UUID production
+cd AviaraDesignCo
+git checkout -b kit-port-dry-run
+
+# Create the directories the kit needs
+cd aviara-site
+mkdir src/puck/blocks src/lib src/content/pages src/content/projects src/content/testimonials src/content/services
+mkdir src/app/admin/pages "src/app/[slug]" src/app/api/save-page public/admin
+
+# Copy kit files (paths assume the kit repo is at C:\Users\wooll\nextjs-sveltia-puck-kit)
+cp -r ../../nextjs-sveltia-puck-kit/apps/reference-site/src/puck src/
+cp ../../nextjs-sveltia-puck-kit/apps/reference-site/src/components/PuckEditor.client.tsx src/components/
+cp ../../nextjs-sveltia-puck-kit/apps/reference-site/src/components/PuckRender.tsx src/components/
+cp ../../nextjs-sveltia-puck-kit/apps/reference-site/src/lib/pages.ts src/lib/
+cp ../../nextjs-sveltia-puck-kit/apps/reference-site/src/app/api/save-page/route.ts src/app/api/save-page/
+cp ../../nextjs-sveltia-puck-kit/apps/reference-site/public/admin/index.html public/admin/
+cp ../../nextjs-sveltia-puck-kit/apps/reference-site/.env.example .
+
+# Apply Aviara-specific edits:
+#   1. Write src/app/admin/pages/[slug]/page.tsx        (mount the editor)
+#   2. Write src/app/[slug]/page.tsx                    (public dynamic route)
+#   3. Write public/admin/config.yml                    (Aviara collections)
+#   4. Add CSS variable aliases to src/app/globals.css
+#   5. Seed src/content/pages/home-editable.json
+
+# Install kit dependencies
+npm install @puckeditor/core@^0.21.2 @octokit/rest@^21.0.2
+
+# Verify the build
+npm run build
 ```
 
-Then redeploy: `vercel --prod`.
-
-### Step 6 — Invite Aviara's owner
-
-In https://github.com/Woollbert/AviaraDesignCo/settings/access:
-1. Invite collaborator → enter Aviara owner's email
-2. They accept via email
-3. Send them: `https://aviaradesignco.com/admin/`
-4. They click "Login with GitHub" → DecapBridge sends a magic link to their email → they're in
+**Time elapsed for actual execution: ~12 minutes** (clone + audit + copy + edits + install + build). No errors at any step.
 
 ---
 
-## Likely customizations after first install
+## What the smoke tests prove
 
-Things Aviara's owner will probably ask for in the first month:
+Tests live at `aviara-site/tests/kit-port-smoke.spec.ts`. Run with:
 
-- **Tighter typography control on the Hero block.** Add a `headingSize` prop with options `small | medium | large` if they ask.
-- **More portfolio layout variants.** The `ImageGallery` block has 3 column options; they may want masonry or carousel.
-- **Featured-project block on the homepage.** Build `ProjectShowcase` with a `projectSlug` field that pulls from `src/content/projects/<slug>.json`.
-- **Inquiry form.** Out of scope for the visual editor — wire as a separate Next.js form action.
+```powershell
+EDITOR_SHARED_TOKEN=any-string GITHUB_PAT=any-string GITHUB_REPO=test/repo GITHUB_BRANCH=main npx playwright test --project=desktop tests/kit-port-smoke.spec.ts
+```
 
-Don't pre-build these. Wait for the actual ask. The kit's whole point is "ship small, extend on demand."
+| Test | What it proves |
+|---|---|
+| Aviara existing homepage still loads | The port didn't break the hand-coded `/` |
+| `/home-editable` renders kit blocks | The renderer + Puck data flow works |
+| **CTABand picks up Aviara brass color** | **The theme bridge works at runtime, not just in theory** |
+| `/admin/index.html` serves Sveltia | The Sveltia mount is reachable |
+| `/admin/pages/[slug]` mounts editor | The Puck route is wired |
+| `/api/save-page` rejects unauthenticated | Auth gate enforced |
+
+Result: 6/6 passing in 5.4s.
 
 ---
 
-## Open questions for DJ before the install
+## What still needs real credentials to fully verify
 
-- Does Aviara have a brand style guide that defines the color tokens? If yes, paste here so the CSS variables can be set correctly upfront.
-- Is there an existing photo library to migrate, or does the owner start from a blank slate?
-- Does Aviara's site have any pages currently that should become Puck-managed, or do we leave existing pages code-managed and only enable Puck for new pages?
-- What email should DecapBridge invite the owner from? (Sometimes companies block magic-link emails from unknown senders.)
-- Is the live domain `aviaradesignco.com` already pointed at the Vercel deployment, or is the kit going to a staging URL first?
+These three flows can only be tested with real creds (DJ has to provide):
+
+1. **Sveltia login** — needs a real `DECAP_BRIDGE_SITE_UUID`. Without it, the login button hangs because DecapBridge can't find the site UUID.
+2. **Puck publish round-trip** — needs a real `GITHUB_PAT` with Contents: Write scope on `Woollbert/AviaraDesignCo`. The save endpoint passes auth + validation already (verified by 502 in test env, which is the test endpoint trying to call GitHub with a bogus PAT). With a real PAT, it should round-trip to a real GitHub commit.
+3. **Auto-deploy verification** — needs Aviara's Vercel project to be picking up commits on the `kit-port-dry-run` branch (or merged to main first).
+
+DJ's TODO when ready:
+- [ ] Register at https://decapbridge.com, get site UUID, paste into `aviara-site/public/admin/config.yml` and `.env.local`
+- [ ] Create fine-grained GitHub PAT scoped to AviaraDesignCo, Contents: Read+Write
+- [ ] Add `EDITOR_SHARED_TOKEN`, `GITHUB_PAT`, `GITHUB_REPO`, `GITHUB_BRANCH` to Vercel env (production)
+- [ ] Merge `kit-port-dry-run` → `main` (or test on the branch first via Vercel preview)
+- [ ] Walk through end-to-end manually: edit at `/admin/pages/home-editable` → publish → verify GitHub commit → verify Vercel deploy → verify live page
+
+---
+
+## What's NOT in this dry-run (deliberately)
+
+- **Aviara-specific custom blocks.** The 8 generic blocks (Hero, RichText, CTABand, FeatureGrid, ImageGallery, Testimonial, ContactInfo, Spacer) cover the structural integration. Aviara likely wants additional blocks like `BeforeAfterSlider`, `ProjectShowcase`, `TestimonialCarousel`, `RoomGrid`. These get built when there's a concrete design ask, not preemptively.
+- **Decap → Sveltia auth gate on the Puck editor route.** Currently `/admin/pages/[slug]` is reachable by anyone who knows the URL (publish is gated by the shared token, but viewing the editor isn't). Tracked in [SPEC.md §3 risks](../SPEC.md#3-trade-offs).
+- **Image upload UI inside Puck blocks.** Owner uploads via Sveltia's media library at `/admin/` and pastes URLs into block fields. Out of scope for v0.1.
+- **Migrating Aviara's existing hand-coded pages to Puck.** Aviara's homepage at `/` stays hand-coded. Only new pages get Puck-managed (currently just `/home-editable` as a demo). When the owner wants the homepage editable, delete `aviara-site/src/app/page.tsx` and add `src/content/pages/home.json`.
+
+---
+
+## Open questions for DJ before the live install
+
+These are the actual decisions left, captured from the dry-run experience:
+
+1. **Should `/home-editable` stay as the demo page, or rename to something more meaningful?** (Currently lives at `/home-editable`; could be `/test-puck` or removed once you confirm it works.)
+2. **Who is the owner email for DecapBridge invitation?** This determines the magic-link recipient.
+3. **Do you want Vercel to deploy the `kit-port-dry-run` branch as a preview before merging?** (Default: yes, so you can click around the editor on a real URL before main gets touched.)
+4. **What's the timeline for adding Aviara-specific blocks (BeforeAfterSlider etc.)?** Lower priority; defer until owner uses the kit and identifies a missing block.
+5. **Should we add a `aviara-site/tests/kit-port-smoke.spec.ts` to the existing CI run?** Currently it's there but not invoked by default — Aviara's playwright.config doesn't auto-discover it because of the project filter.

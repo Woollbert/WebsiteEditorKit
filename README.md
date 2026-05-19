@@ -63,8 +63,9 @@ MIT. Use freely, fork freely, no attribution required (but appreciated).
 
 ## Status
 
-✅ v0.1 complete. All 6 phases shipped:
+✅ v0.1 shipped, tested, and ground-truth-ported.
 
+**Built (6 phases):**
 - [x] Phase 1 — Scaffolding + SPEC.md + README outline
 - [x] Phase 2 — Next.js 15 reference site skeleton (Tailwind 4 + TypeScript)
 - [x] Phase 3 — Sveltia CMS wired with 3 example collections (settings, services, team)
@@ -72,4 +73,13 @@ MIT. Use freely, fork freely, no attribution required (but appreciated).
 - [x] Phase 5 — Save pipeline (POST /api/save-page → GitHub Contents API → auto-deploy)
 - [x] Phase 6 — SETUP.md + porting-to-aviara.md + templates/
 
-**Next:** ground-truth the Aviara port. Open issues for anything that doesn't match the docs.
+**Validated (runtime tests):**
+- [x] 15 Playwright tests passing against the reference site (1 skipped, tracked in spec)
+- [x] Covers: Sveltia mount, Puck editor mount, all 4 reference-page block types render, API auth + validation + GitHub-call wiring
+
+**Ported (real install on another project):**
+- [x] Dry-run port to [AviaraDesignCo / kit-port-dry-run branch](https://github.com/Woollbert/AviaraDesignCo/tree/kit-port-dry-run) — built clean
+- [x] 6 smoke tests passing against built Aviara, including a runtime check that the theme-bridge pattern (CSS variable aliases) makes kit blocks pick up Aviara's brand colors
+- [x] [docs/porting-to-aviara.md](./docs/porting-to-aviara.md) rewritten from speculative → ground-truthed based on the actual port
+
+**Still needs real credentials to fully verify the production loop:** Sveltia login (DecapBridge UUID), Puck publish round-trip (GitHub PAT), auto-deploy (Vercel env vars). See `docs/porting-to-aviara.md` for the DJ-TODO checklist.

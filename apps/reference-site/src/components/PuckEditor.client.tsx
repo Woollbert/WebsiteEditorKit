@@ -8,9 +8,10 @@ import { puckConfig } from '@/puck/config';
 type Props = {
   slug: string;
   initialData: Data;
+  editorToken: string;
 };
 
-export default function PuckEditor({ slug, initialData }: Props) {
+export default function PuckEditor({ slug, initialData, editorToken }: Props) {
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +22,10 @@ export default function PuckEditor({ slug, initialData }: Props) {
     try {
       const res = await fetch('/api/save-page', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-editor-token': editorToken,
+        },
         body: JSON.stringify({ slug, data }),
       });
       if (!res.ok) {

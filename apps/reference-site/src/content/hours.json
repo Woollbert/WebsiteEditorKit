@@ -1,0 +1,11 @@
+{
+  "weeklyHours": [
+    { "day": "Mon", "open": "09:00", "close": "17:00" },
+    { "day": "Tue", "open": "09:00", "close": "17:00" },
+    { "day": "Wed", "open": "09:00", "close": "17:00" },
+    { "day": "Thu", "open": "09:00", "close": "19:00" },
+    { "day": "Fri", "open": "09:00", "close": "19:00" },
+    { "day": "Sat", "open": "10:00", "close": "16:00" },
+    { "day": "Sun", "open": "closed", "close": "closed" }
+  ]
+}

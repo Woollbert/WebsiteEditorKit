@@ -1,0 +1,113 @@
+# Sveltia CMS configuration — drop-in compatible with Decap CMS config schema.
+#
+# This is the EDITABLE SCHEMA the site owner sees in /admin/. Customize the
+# collections below to match your project's content shape.
+#
+# Auth uses DecapBridge — a free OAuth proxy that lets editors log in with an
+# email magic link instead of needing GitHub credentials.
+
+backend:
+  name: git-gateway
+  repo: owner/your-repo-name      # CHANGE: format is github-username/repo-name
+  branch: main
+  # DecapBridge replaces the default git-gateway auth with PKCE OAuth.
+  # Replace this UUID with your own from https://decapbridge.com (free, takes 5 min).
+  site_uuid: REPLACE_WITH_DECAP_BRIDGE_SITE_UUID
+
+# Where uploaded images live in the repo. The path is relative to the public/
+# directory so /uploads/photo.jpg resolves correctly in the rendered site.
+media_folder: public/uploads
+public_folder: /uploads
+
+# Optional: prevent owner from publishing in one click; require draft review.
+# Disabled by default since most small-business owners are also the reviewer.
+# publish_mode: editorial_workflow
+
+# Optional: site URL shown in the editor's "View live site" link.
+site_url: http://localhost:3000
+display_url: http://localhost:3000
+
+# ============================================================================
+# COLLECTIONS — each one becomes a section in the /admin/ sidebar.
+# ============================================================================
+#
+# Two types of collections:
+#   - file:   one editable file with fixed fields (singleton — e.g. site settings)
+#   - folder: many editable files in a folder (e.g. blog posts, team members)
+#
+# The examples below are illustrative. Replace with your actual content shape.
+# ============================================================================
+
+collections:
+  # --------------------------------------------------------------------------
+  # Site-wide settings (singleton)
+  # --------------------------------------------------------------------------
+  - name: settings
+    label: Site Settings
+    files:
+      - name: site
+        label: Site Info
+        file: src/content/site.json
+        format: json
+        fields:
+          - { name: name, label: Business Name, widget: string }
+          - { name: tagline, label: Tagline, widget: string }
+          - { name: phone, label: Phone, widget: string }
+          - { name: email, label: Email, widget: string }
+          - { name: address, label: Address, widget: text }
+
+      - name: hours
+        label: Business Hours
+        file: src/content/hours.json
+        format: json
+        fields:
+          - name: weeklyHours
+            label: Weekly Hours
+            widget: list
+            summary: '{{day}}: {{open}}-{{close}}'
+            fields:
+              - { name: day, label: Day, widget: select, options: [Sun, Mon, Tue, Wed, Thu, Fri, Sat] }
+              - { name: open, label: Open, widget: string, hint: '24h format, e.g. 09:00 or "closed"' }
+              - { name: close, label: Close, widget: string, hint: '24h format, e.g. 18:00' }
+
+  # --------------------------------------------------------------------------
+  # Services (folder collection — one file per service)
+  # --------------------------------------------------------------------------
+  - name: services
+    label: Services
+    folder: src/content/services
+    create: true
+    slug: '{{slug}}'
+    format: json
+    summary: '{{name}} — {{priceFrom}}'
+    fields:
+      - { name: name, label: Service Name, widget: string }
+      - { name: priceFrom, label: Starting Price, widget: string, hint: 'e.g. "$25" or "From $50"' }
+      - { name: description, label: Description, widget: text }
+      - name: features
+        label: Features
+        widget: list
+        field: { name: feature, label: Feature, widget: string }
+
+  # --------------------------------------------------------------------------
+  # Team members (folder collection)
+  # --------------------------------------------------------------------------
+  - name: team
+    label: Team
+    folder: src/content/team
+    create: true
+    slug: '{{slug}}'
+    format: json
+    summary: '{{name}} — {{role}}'
+    fields:
+      - { name: name, label: Name, widget: string }
+      - { name: role, label: Role, widget: string }
+      - { name: photo, label: Photo, widget: image, required: false }
+      - { name: bio, label: Bio, widget: text }
+      - name: social
+        label: Social Links
+        widget: object
+        required: false
+        fields:
+          - { name: instagram, label: Instagram URL, widget: string, required: false }
+          - { name: facebook, label: Facebook URL, widget: string, required: false }

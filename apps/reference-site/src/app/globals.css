@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #16110b;
+  --color-ink-soft: #2a2118;
+  --color-cream: #f7f3ec;
+  --color-cream-soft: #faf7f1;
+  --color-gold: #c9a45c;
+  --color-gold-deep: #9c7a3c;
+  --color-line: #e6dfd1;
+
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-display: "Playfair Display", Georgia, serif;
+}
+
+body {
+  background: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}

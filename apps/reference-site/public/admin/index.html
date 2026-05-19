@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Content Manager</title>
+    <link rel="icon" href="/favicon.ico" />
+    <style>
+      body { margin: 0; font-family: system-ui, sans-serif; }
+      #loading { padding: 2rem; text-align: center; color: #666; }
+    </style>
+  </head>
+  <body>
+    <div id="loading">Loading editor…</div>
+
+    <!--
+      Sveltia CMS — drop-in replacement for Decap CMS.
+      Loads from CDN; the schema lives in /admin/config.yml.
+
+      Auth uses DecapBridge (https://decapbridge.com) so the editor logs in
+      with an email magic link instead of needing GitHub credentials.
+      Configure DECAP_BRIDGE_SITE_UUID in config.yml's backend.site_uuid.
+    -->
+    <script src="https://unpkg.com/@sveltia/cms@0/dist/sveltia-cms.js"></script>
+  </body>
+</html>

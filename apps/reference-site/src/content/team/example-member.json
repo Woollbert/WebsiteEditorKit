@@ -1,0 +1,7 @@
+{
+  "name": "Example Person",
+  "role": "Founder",
+  "photo": "",
+  "bio": "Sample team member entry. Edit this in /admin/ under Team to see the schema render.",
+  "social": {}
+}

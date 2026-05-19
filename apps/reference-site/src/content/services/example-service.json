@@ -1,0 +1,6 @@
+{
+  "name": "Example Service",
+  "priceFrom": "$50",
+  "description": "A sample service entry to show the Services collection shape. Edit this in /admin/ under Services.",
+  "features": ["Feature one", "Feature two", "Feature three"]
+}
